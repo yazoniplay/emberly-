@@ -57,7 +57,7 @@
     drawerRoot.classList.add("is-open");
     drawerRoot.setAttribute("aria-hidden","false");
     const backdrop = $("[data-drawer-close].drawer-backdrop");
-    if (backdrop) backdrop.hidden = false;
+    if (backdrop) { backdrop.hidden = false; requestAnimationFrame(() => backdrop.classList.add("is-visible")); }
     document.body.classList.add("drawer-open");
     $(".drawer-close", drawerRoot)?.focus();
   };
@@ -66,7 +66,7 @@
     drawerRoot.classList.remove("is-open");
     drawerRoot.setAttribute("aria-hidden","true");
     const backdrop = $("[data-drawer-close].drawer-backdrop");
-    if (backdrop) backdrop.hidden = true;
+    if (backdrop) { backdrop.classList.remove("is-visible"); window.setTimeout(() => { if (!drawerRoot?.classList.contains("is-open")) backdrop.hidden = true; }, 280); }
     document.body.classList.remove("drawer-open");
   };
   const renderDrawer = () => {
