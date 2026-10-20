@@ -34,8 +34,8 @@
     wrap.innerHTML = '<div class="drawer-backdrop" data-drawer-close hidden></div><aside class="cart-drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="true"><div class="drawer-header"><div><p class="eyebrow">EMBERLY</p><h2 id="drawer-title">Your bag <span id="drawer-count">(0)</span></h2></div><button class="drawer-close" type="button" aria-label="Close shopping bag" data-drawer-close>×</button></div><div class="drawer-items" id="drawer-items" aria-live="polite"></div><div class="drawer-footer" id="drawer-footer"><div class="drawer-subtotal"><span>Subtotal</span><strong id="drawer-subtotal"></strong></div><p>Shipping and taxes are not included.</p><a class="button button-cream button-wide drawer-view-bag" href="cart.html">View bag &amp; checkout status ↗</a><p class="checkout-note">Checkout is not configured. No payment will be taken.</p><a class="drawer-continue" href="shop.html">Continue shopping</a></div></aside>';
     while (wrap.firstChild) document.body.append(wrap.firstChild);
     drawerRoot = $("#cart-drawer");
-    $("[data-drawer-close]").forEach(el => el.addEventListener("click", closeDrawer));
-    $(".bag-link").forEach(link => link.addEventListener("click", event => {
+    $$("[data-drawer-close]").forEach(el => el.addEventListener("click", closeDrawer));
+    $$(".bag-link").forEach(link => link.addEventListener("click", event => {
       event.preventDefault();
       if ($(".nav.is-open")) { $(".nav").classList.remove("is-open"); $(".menu-toggle")?.setAttribute("aria-expanded","false"); }
       openDrawer();
