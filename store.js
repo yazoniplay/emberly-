@@ -1,18 +1,125 @@
 (() => {
- const cfg=window.EMBERLY;if(!cfg)return;
- const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
- const money=n=>new Intl.NumberFormat('sv-SE',{style:'currency',currency:cfg.product.currency,maximumFractionDigits:0}).format(n);
- const getCart=()=>{try{const x=JSON.parse(localStorage.getItem('emberly-cart')||'[]');return Array.isArray(x)?x:[]}catch{return []}};
- const saveCart=x=>{localStorage.setItem('emberly-cart',JSON.stringify(x));updateCount()};
- const updateCount=()=>{$$('.bag-count').forEach(e=>e.textContent=getCart().reduce((n,i)=>n+i.qty,0))};
- const toast=(msg)=>{let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';t.setAttribute('role','status');document.body.append(t)}t.textContent=msg;t.hidden=false;clearTimeout(window.__emberToast);window.__emberToast=setTimeout(()=>t.hidden=true,2600)};
- const add=(qty=1)=>{qty=Math.floor(Number(qty));if(!Number.isFinite(qty)||qty<1){toast('Choose a quantity of at least one.');return}let c=getCart(),item=c.find(i=>i.id===cfg.product.id);if(item)item.qty+=qty;else c.push({id:cfg.product.id,qty});saveCart(c);toast('Added to your bag.');};
- const renderPrice=()=>$$('[data-price]').forEach(e=>e.textContent=money(cfg.product.priceSEK));
- const renderProduct=()=>{$$('[data-product-name]').forEach(e=>e.textContent=cfg.product.name);$$('[data-product-description]').forEach(e=>e.textContent=cfg.product.description);$$('[data-product-image]').forEach(e=>{e.src=cfg.product.images[0].src;e.alt=cfg.product.images[0].alt});renderPrice()};
- const initGallery=()=>{const main=$('#gallery-main'),thumbs=$('#gallery-thumbs');if(!main||!thumbs)return;thumbs.innerHTML='';cfg.product.images.forEach((im,i)=>{const b=document.createElement('button');b.className='thumb';b.type='button';b.setAttribute('aria-label','Show image '+(i+1));b.setAttribute('aria-pressed',String(i===0));const img=document.createElement('img');img.src=im.src;img.alt=im.alt;img.loading='lazy';b.append(img);b.addEventListener('click',()=>{main.src=im.src;main.alt=im.alt;$$('.thumb',thumbs).forEach((x,j)=>x.setAttribute('aria-pressed',String(i===j)))});thumbs.append(b)})};
- const renderCart=()=>{const root=$('#cart-items');if(!root)return;const c=getCart();root.innerHTML='';if(!c.length){root.innerHTML='<div class="empty"><h2 style="font:40px var(--serif)">Your bag is waiting.</h2><p class="muted">Discover a warmer kind of evening.</p><a class="btn" href="shop.html">Explore the diffuser</a></div>';$('#cart-summary').hidden=true;return}$('#cart-summary').hidden=false;c.forEach(item=>{if(item.id!==cfg.product.id)return;const row=document.createElement('article');row.className='cart-row';const im=document.createElement('img');im.src=cfg.product.images[0].src;im.alt=cfg.product.images[0].alt;const info=document.createElement('div');const h=document.createElement('h3');h.textContent=cfg.product.name;const p=document.createElement('p');p.className='muted';p.textContent=money(cfg.product.priceSEK)+' each';const q=document.createElement('div');q.className='quantity';const minus=document.createElement('button');minus.type='button';minus.textContent='−';minus.setAttribute('aria-label','Decrease quantity');const out=document.createElement('output');out.textContent=item.qty;const plus=document.createElement('button');plus.type='button';plus.textContent='+';plus.setAttribute('aria-label','Increase quantity');const remove=document.createElement('button');remove.type='button';remove.className='remove';remove.textContent='Remove';const set=n=>{let next=getCart();if(n<1)next=next.filter(x=>x.id!==item.id);else next.forEach(x=>{if(x.id===item.id)x.qty=n});saveCart(next);renderCart();if(n<1)toast('Item removed from your bag.')};minus.onclick=()=>set(item.qty-1);plus.onclick=()=>set(item.qty+1);remove.onclick=()=>set(0);q.append(minus,out,plus);info.append(h,p,q,document.createElement('br'),remove);const total=document.createElement('strong');total.textContent=money(cfg.product.priceSEK*item.qty);row.append(im,info,total);root.append(row)});const subtotal=c.reduce((sum,i)=>sum+(i.id===cfg.product.id?cfg.product.priceSEK*i.qty:0),0);$('#cart-subtotal').textContent=money(subtotal)};
- document.addEventListener('click',e=>{const a=e.target.closest('[data-add-to-cart]');if(a){e.preventDefault();const q=$('#product-quantity');add(q?Math.max(1,Math.floor(Number(q.value)||1)):1)}const buy=e.target.closest('[data-buy-now]');if(buy){e.preventDefault();const q=$('#product-quantity');add(q?Math.max(1,Math.floor(Number(q.value)||1)):1);location.href='cart.html'}});
- const menu=$('.menu-toggle');if(menu)menu.addEventListener('click',()=>{const nav=$('.nav');const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open))});
- renderProduct();updateCount();initGallery();renderCart();
- const checkout=$('#checkout-button');if(checkout)checkout.addEventListener('click',()=>toast('Checkout is not configured yet. No payment has been taken.'));
+  "use strict";
+  const cfg = window.EMBERLY;
+  if (!cfg) return;
+  const $ = (s, root = document) => root.querySelector(s);
+  const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+  const money = n => new Intl.NumberFormat("sv-SE", { style: "currency", currency: cfg.product.currency, maximumFractionDigits: 0 }).format(n);
+  const safeQty = n => Number.isFinite(Number(n)) ? Math.min(99, Math.max(1, Math.floor(Number(n)))) : 1;
+  const getCart = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem("emberly-cart") || "[]");
+      if (!Array.isArray(raw)) return [];
+      return raw.filter(x => x && x.id === cfg.product.id).map(x => ({ id: cfg.product.id, qty: safeQty(x.qty) }));
+    } catch { return []; }
+  };
+  const saveCart = cart => { try { localStorage.setItem("emberly-cart", JSON.stringify(cart)); } catch {} updateCount(); renderCart(); };
+  const updateCount = () => $$(".bag-count").forEach(el => { el.textContent = getCart().reduce((n, x) => n + x.qty, 0); });
+  const announce = message => {
+    let node = $("#toast");
+    if (!node) { node = document.createElement("div"); node.id = "toast"; node.className = "toast"; node.setAttribute("role", "status"); node.setAttribute("aria-live", "polite"); document.body.append(node); }
+    node.textContent = message; node.hidden = false;
+  };
+  const addToBag = qty => {
+    const amount = safeQty(qty);
+    const cart = getCart();
+    const item = cart.find(x => x.id === cfg.product.id);
+    if (item) item.qty = Math.min(99, item.qty + amount); else cart.push({ id: cfg.product.id, qty: amount });
+    saveCart(cart); announce("Added to your bag.");
+  };
+  const renderProduct = () => {
+    $$("[data-product-name]").forEach(el => el.textContent = cfg.product.name);
+    $$("[data-product-description]").forEach(el => el.textContent = cfg.product.description);
+    $$("[data-price]").forEach(el => el.textContent = money(cfg.product.price));
+    $$("[data-product-image]").forEach(el => { el.src = cfg.product.images[0].src; el.alt = cfg.product.images[0].alt; });
+    $$("[data-product-price]").forEach(el => el.textContent = money(cfg.product.price));
+    $$("[data-price-cta]").forEach(el => el.textContent = "Discover · " + money(cfg.product.price));
+  };
+  const initGallery = () => {
+    const main = $("#gallery-main"), thumbs = $("#gallery-thumbs");
+    if (!main || !thumbs) return;
+    main.src = cfg.product.images[0].src; main.alt = cfg.product.images[0].alt;
+    thumbs.replaceChildren();
+    cfg.product.images.forEach((item, i) => {
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "gallery-thumb"; button.setAttribute("aria-label", "Show product image " + (i + 1)); button.setAttribute("aria-pressed", String(i === 0));
+      const image = document.createElement("img"); image.src = item.src; image.alt = ""; image.loading = "lazy"; image.decoding = "async";
+      button.append(image);
+      button.addEventListener("click", () => {
+        main.src = item.src; main.alt = item.alt;
+        $$(".gallery-thumb", thumbs).forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+      });
+      thumbs.append(button);
+    });
+    main.tabIndex = 0;
+    main.addEventListener("keydown", e => {
+      if (!["ArrowLeft", "ArrowRight"].includes(e.key)) return;
+      e.preventDefault();
+      const current = $$(".gallery-thumb", thumbs).findIndex(b => b.getAttribute("aria-pressed") === "true");
+      const next = (current + (e.key === "ArrowRight" ? 1 : -1) + cfg.product.images.length) % cfg.product.images.length;
+      $$(".gallery-thumb", thumbs)[next]?.click();
+    });
+  };
+  const renderCart = () => {
+    const root = $("#cart-items");
+    if (!root) return;
+    const cart = getCart();
+    root.replaceChildren();
+    const summary = $("#cart-summary");
+    if (!cart.length) {
+      const empty = document.createElement("div"); empty.className = "empty-bag";
+      empty.innerHTML = '<p class="eyebrow">A little room for atmosphere</p><h2>Your bag is waiting.</h2><p>When something feels right, you’ll find it here.</p><a class="button button-dark" href="index.html#the-object">Discover the object</a>';
+      root.append(empty); if (summary) summary.hidden = true; return;
+    }
+    if (summary) summary.hidden = false;
+    cart.forEach(item => {
+      const row = document.createElement("article"); row.className = "cart-row";
+      const image = document.createElement("img"); image.src = cfg.product.images[0].src; image.alt = cfg.product.images[0].alt; image.loading = "lazy";
+      const details = document.createElement("div"); details.className = "cart-item-details";
+      const name = document.createElement("h3"); name.textContent = cfg.product.name;
+      const unit = document.createElement("p"); unit.textContent = money(cfg.product.price) + " each"; unit.className = "muted";
+      const quantity = document.createElement("div"); quantity.className = "quantity-control";
+      const minus = document.createElement("button"); minus.type = "button"; minus.textContent = "−"; minus.setAttribute("aria-label", "Decrease quantity");
+      const output = document.createElement("output"); output.textContent = String(item.qty);
+      const plus = document.createElement("button"); plus.type = "button"; plus.textContent = "+"; plus.setAttribute("aria-label", "Increase quantity");
+      const update = qty => { const next = getCart(); if (qty < 1) saveCart(next.filter(x => x.id !== item.id)); else { next.forEach(x => { if (x.id === item.id) x.qty = safeQty(qty); }); saveCart(next); } };
+      minus.addEventListener("click", () => update(item.qty - 1));
+      plus.addEventListener("click", () => update(Math.min(99, item.qty + 1)));
+      quantity.append(minus, output, plus);
+      const remove = document.createElement("button"); remove.type = "button"; remove.className = "text-button"; remove.textContent = "Remove"; remove.addEventListener("click", () => { saveCart(getCart().filter(x => x.id !== item.id)); announce("Removed from your bag."); });
+      details.append(name, unit, quantity, remove);
+      const total = document.createElement("strong"); total.textContent = money(cfg.product.price * item.qty);
+      row.append(image, details, total); root.append(row);
+    });
+    const subtotal = cart.reduce((sum, item) => sum + cfg.product.price * item.qty, 0);
+    const totalNode = $("#cart-subtotal"); if (totalNode) totalNode.textContent = money(subtotal);
+  };
+  const initMenu = () => {
+    const toggle = $(".menu-toggle"), nav = $(".nav");
+    if (!toggle || !nav) return;
+    toggle.addEventListener("click", () => { const open = nav.classList.toggle("is-open"); toggle.setAttribute("aria-expanded", String(open)); toggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation"); });
+    $$("a", nav).forEach(link => link.addEventListener("click", () => { nav.classList.remove("is-open"); toggle.setAttribute("aria-expanded", "false"); toggle.setAttribute("aria-label", "Open navigation"); }));
+  };
+  const initReveal = () => {
+    if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const items = $$(".reveal"); items.forEach(el => el.classList.add("will-reveal"));
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add("is-visible"); observer.unobserve(entry.target); } }), { threshold: 0.12 });
+    items.forEach(el => observer.observe(el));
+  };
+  document.addEventListener("click", event => {
+    const add = event.target.closest("[data-add-to-cart]");
+    if (add) { event.preventDefault(); const input = $("#product-quantity"); addToBag(input ? input.value : 1); }
+    const buy = event.target.closest("[data-buy-now]");
+    if (buy) { event.preventDefault(); const input = $("#product-quantity"); addToBag(input ? input.value : 1); location.href = "cart.html"; }
+    const video = event.target.closest("[data-experience-flame]");
+    if (video) { const target = $("#the-object"); if (target) { target.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); $("#gallery-main")?.focus({ preventScroll: true }); } }
+  });
+  const checkout = $("#checkout-button");
+  if (checkout) checkout.addEventListener("click", () => announce("Checkout is not configured. No payment has been taken."));
+  const minus = $("#qty-minus"), plus = $("#qty-plus"), input = $("#product-quantity"), output = $("#qty-display");
+  const updateQuantity = n => { if (!input) return; input.value = safeQty(n); if (output) output.textContent = input.value; };
+  minus?.addEventListener("click", () => updateQuantity(Number(input?.value || 1) - 1));
+  plus?.addEventListener("click", () => updateQuantity(Number(input?.value || 1) + 1));
+  input?.addEventListener("change", () => updateQuantity(input.value));
+  renderProduct(); updateCount(); initGallery(); renderCart(); initMenu(); initReveal();
 })();
