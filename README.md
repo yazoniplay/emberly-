@@ -1,30 +1,38 @@
-# Emberly storefront
+# emberly. — Bring the Glow Home
 
-Static multi-page storefront for the Emberly flame-effect diffuser concept. Built for GitHub Pages without a build step.
+Static, GitHub Pages-compatible storefront concept for a fireplace-inspired flame-effect diffuser. No build tools or server runtime are required.
 
-## Pages
-- `index.html` — home
-- `shop.html` — product gallery and purchase controls
-- `why.html` — brand story
-- `faq.html` — product and policy FAQ
-- `cart.html` — persistent shopping bag
-- `supplier.html` — supplier/product verification notes
+## Main experience
+- `index.html` — cinematic single-product homepage, gallery, editorial feature sections, brand manifesto, honest pre-launch social proof and final CTA.
+- `shop.html` — dedicated product page.
+- `why.html` — brand story.
+- `faq.html` — product and pre-launch FAQs.
+- `cart.html` — persistent shopping bag, quantity controls and subtotal.
+- `supplier.html` — product verification checklist.
+- `shipping.html`, `returns.html`, `privacy.html`, `terms.html` — editable policy templates; these require completion and review before launch.
+- `product-config.js` — central product name, price, currency, gallery, supplier URL, shipping and checkout state.
+- `store.js` — shared gallery, bag persistence, quantity controls, navigation, subtotal and disabled-checkout message.
+- `styles.css` — responsive editorial design system, focus states and reduced-motion support.
 
-## Product configuration
-Edit `product-config.js` to change the proposed SEK price, product title, copy, gallery images, verified specifications, shipping, contact, and checkout configuration. The current 899 SEK price is a test assumption. Current gallery images are lifestyle imagery, clearly labelled as illustrative; they are not verified product photos. Replace them with supplier-approved images of the exact variant before launch.
+## Product imagery and accuracy
+The supplier listing is [CJdropshipping's 3D flame-effect diffuser](https://cjdropshipping.com/product/new-flame-aromatherapy-machine-colorful-essential-oil-diffuser-home-large-fog-volume-flame-humidifier-3d-flame-fireplace-machine-p-2410050244571620700.html). The main product gallery now uses supplier-hosted images depicting the actual product style, rather than unrelated lifestyle photos. Confirm commercial-use permission for those images before launch. Supporting interior photography is illustrative and sourced from Unsplash.
 
-## Current functionality
-- Cart persists between pages with localStorage.
-- Add, remove, and quantity controls; subtotal and bag count update.
-- Responsive layouts, keyboard-operable controls, semantic page structure, reduced-motion support.
-- Checkout is deliberately disabled and does not simulate payment success.
+The configured price is **899 SEK**, a test assumption—not a verified retail price. The supplier listing mentions capacity, lighting and timer features, but details vary and may conflict between variant/product attribute fields. Verify the exact SKU, sample, manual, safety requirements, included accessories, power input and every customer-facing claim before launch. No customer reviews are fabricated. No variants are offered in the interface until a purchasable option is confirmed.
+
+## Cart and checkout
+- Cart persists in `localStorage` in the visitor's browser.
+- Quantity controls are bounded from 1 to 99; items can be removed and the empty state is handled.
+- Subtotal is calculated from the central configured price and quantity. Shipping, tax and final checkout totals are not calculated.
+- Checkout is disabled. The button does not simulate payment or create an order.
+- Never collect card details directly in this static frontend. A real launch needs a legitimate provider, server-side price/order validation, and verified payment webhooks.
 
 ## Before accepting orders
-1. Verify the selected supplier variant, images, included accessories, capacity, lighting, timer, remote, and power requirements directly with CJdropshipping.
-2. Confirm fulfilment countries, costs, delivery estimates, return/damage process, and a monitored customer-support email.
-3. Configure a legitimate payment provider with an adult parent/legal guardian handling account ownership, business obligations, and provider verification. Keep secret keys server-side. Add server-side price/cart validation and payment webhook verification; never collect card details in this static site.
-4. Review consumer, tax, privacy, product-safety, and import requirements for every market served.
-5. Test all pages on mobile and desktop. External Google Fonts and Unsplash lifestyle images require network access.
+1. Confirm supplier variant, product imagery and image rights, product manual, safety compliance, accessories, specs, stock and fulfilment.
+2. Confirm destination coverage, shipping costs/timing, customs/tax wording, tracking, returns, damaged-item handling and a monitored support email.
+3. Complete all policy templates with accurate seller details and get appropriate legal review. Do not publish bracketed placeholders as finished policies.
+4. Have an adult parent/legal guardian handle payment-provider account ownership, verification, business obligations and any required registrations.
+5. Configure secure checkout and test provider sandbox flows, order confirmation, cancellation and refunds before enabling live payments.
+6. Verify the GitHub Pages deployment in a browser on phone and desktop, including cart persistence, keyboard operation, images, links and browser console.
 
-## Deploy
-The repository can be served directly by GitHub Pages: repository Settings → Pages → deploy from the main branch and root directory. No build command is needed. The sitemap URL assumes the repository's GitHub Pages project URL; update it if the deployment URL changes.
+## Deployment
+The files can be served from the repository root with GitHub Pages. In repository **Settings → Pages**, select the intended branch and root directory. No build command is required. Deployment and the live site must still be verified in GitHub Pages settings and in a browser after the latest commits finish.
